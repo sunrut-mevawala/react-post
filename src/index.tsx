@@ -1,13 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import App from './App';
 import reportWebVitals from './reportWebVitals';
-import UserComponent from './packages/component/userComponent/userComponent';
-import PostComponent from './packages/component/postComponent/postComponent';
 import AppRoutes from './routes/routes';
-import { BrowserRouter, useLocation } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import HeaderComponent from './packages/component/homeComponent/headerComponent';
+import CategoryTable from './packages/component/Operations/CategoryTable';
+import ProductTable from './packages/component/Operations/ProductTable';
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
@@ -16,7 +15,7 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
      <HeaderComponent/>
-      <AppRoutes/>
+      <AppRoutes/>  
     </BrowserRouter>
   </React.StrictMode>
 );

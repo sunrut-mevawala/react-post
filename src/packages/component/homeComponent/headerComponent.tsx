@@ -22,7 +22,7 @@ function HeaderComponent() {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
 
-  const [pages, setPages] = React.useState<string[]>(["Home", "Users", "Posts", "Login"]);
+  const [pages, setPages] = React.useState<string[]>(["Home", "Users", "Operations","Posts", "Login"]);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -39,7 +39,7 @@ function HeaderComponent() {
 
     // Update the pages state to include "Users" page only if the user is logged in
     if (user && user.userType === 'admin') {
-      setPages((prevPages) => [...prevPages, "Users"]);
+      setPages((prevPages) => [...prevPages, "Operations","Users"]);
     }
   }, [location]);
 
@@ -65,6 +65,9 @@ function HeaderComponent() {
         break;
       case "Posts":
         routeChange("/post");
+        break;
+      case "Operations":
+        routeChange("/operations");
         break;
       case "Login":
         routeChange("/auth/login");
