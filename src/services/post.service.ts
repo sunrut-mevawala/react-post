@@ -17,3 +17,7 @@ export const insertPost = (postData:any ,config:any) =>{
 export const deletePost = (url:any,config?:any) => {
     return apiClient.delete(url,config);
 }
+
+export const updatePost = async (url: string, data: FormData, config: any) => {
+      return apiClient.put(url, data, config);   
+}         
