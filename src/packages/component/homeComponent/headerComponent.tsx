@@ -40,8 +40,7 @@ function HeaderComponent() {
   const [progress, setProgress] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
 
-
-  const [pages, setPages] = React.useState<string[]>(["Home", "Product", "Users", "Posts", "Login"]);
+  const [pages, setPages] = React.useState<string[]>(["Home", "Users", "Operations","Posts", "Login"]);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -58,7 +57,7 @@ function HeaderComponent() {
 
     // Update the pages state to include "Users" page only if the user is logged in
     if (user && user.userType === 'admin') {
-      setPages((prevPages) => [...prevPages, "Users"]);
+      setPages((prevPages) => [...prevPages, "Operations","Users"]);
     }
 
   //   const timer = setInterval(() => {
@@ -101,6 +100,9 @@ function HeaderComponent() {
         break;
       case "Posts":
         routeChange("/post");
+        break;
+      case "Operations":
+        routeChange("/operations");
         break;
       case "Product":
         routeChange("/product");
