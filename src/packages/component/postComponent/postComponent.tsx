@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Menu, MenuItem, Snackbar, IconButton as MuiIconButton, Alert, IconButtonProps } from "@mui/material";
+import { Menu, MenuItem, Snackbar, IconButton as MuiIconButton, Alert, IconButtonProps, Skeleton } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Card from "@mui/material/Card";
 import CardHeader from "@mui/material/CardHeader";
@@ -21,9 +21,12 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import ShareIcon from "@mui/icons-material/Share";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { getAllPost, insertPost, deletePost } from "../../../services/post.service";
+import { getAllPost, insertPost, deletePost, updatePost } from "../../../services/post.service";
 import { getLoggedInUserId, getUserInfoFromLS } from "../../helpers/localStorage.hapler";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { baseurl } from "../../../services/creds";
+import ChildClass from "./temp";
+
 
 interface ExpandMoreProps extends IconButtonProps {
   expand: boolean;
@@ -44,23 +47,35 @@ export default function RecipeReviewCards() {
   const [expanded, setExpanded] = React.useState(false);
   const [postData, setPostData] = React.useState<any[]>([]);
   const [open, setOpen] = React.useState(false);
+  const [postId, setPostId] = React.useState('');
   const [postTitle, setPostTitle] = React.useState('');
+  const [userId, setUserId] = React.useState('');
+  const [userName, setUserName] = React.useState('');
   const [postDescription, setPostDescription] = React.useState('');
+  const [imageUrl, setImageUrl] = React.useState('');
   const [snackbarMessage, setSnackbarMessage] = React.useState('');
   const [snackbarSeverity, setSnackbarSeverity] = React.useState<'success' | 'error'>('success');
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [selectedPostId, setSelectedPostId] = React.useState<number | null>(null);
-
+  const [dialogContentText, setDialogContentText] = React.useState('');
+  const [loading, setLoading] = React.useState(true); // Add a loading state
+  const [dialogTitle, setDialogTitle] = React.useState('');
+  const [buttonName, setButtonName] = React.useState('');
   const [titleError, setTitleError] = React.useState(false);
   const [descriptionError, setDescriptionError] = React.useState(false);
   const [imageUrlError, setImageUrlError] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = React.useState<string | null>(null);
+  const refTitle = React.useRef<HTMLInputElement>(null);;
+  const [variant, setVariant] = React.useState<'contained' | 'outlined'>('outlined');
 
   const userInfo = getUserInfoFromLS();
 
   React.useEffect(() => {
-    getPostData();
+    setTimeout(() => {
+      getPostData();
+    }, 3000); // Set timeout for 4 seconds (adjust to 5000 for 5 seconds if needed)
   }, []);
 
   const getPostData = async () => {
@@ -73,6 +88,8 @@ export default function RecipeReviewCards() {
       }
     } catch (err) {
       console.error(err);
+    }finally {
+      setLoading(false); // Set loading state to false
     }
   };
 
@@ -81,8 +98,28 @@ export default function RecipeReviewCards() {
   };
 
   const handleClickOpen = () => {
+    setDialogTitle('Insert Record');
+    setDialogContentText('To insert a new record, please fill in the following fields and click submit.')
+    setPostTitle('');
+    setPostDescription('');
+    setButtonName('Insert')
+    setImagePreviewUrl(null);
     setOpen(true);
+    setTimeout(() => {
+      if(refTitle.current){
+        const textfield = refTitle.current.querySelectorAll('input')[0];
+        textfield.focus();
+      }
+    }, 10); 
   };
+
+  const nullData = () => {
+    setPostTitle('');
+    setPostDescription('');
+    setImageUrl('');
+    setUserId('')
+    setUserName('');
+  }
 
   const handleClose = () => {
     setOpen(false);
@@ -125,7 +162,7 @@ export default function RecipeReviewCards() {
     }
   }
 
-  const handleFormSubmit = async (event: any) => {
+  const handleFormSubmit = async (event: any, operationType:string) => {
     event.preventDefault();
     
     if (!validateFields()) {
@@ -133,33 +170,35 @@ export default function RecipeReviewCards() {
     }
 
     try {
-      if(!selectedFile){
+      if(operationType === 'Insert' && !selectedFile){
         setSnackbarMessage("No file has been selected!");
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
         return;
       }
-      console.log(selectedFile);
       
       const formData = new FormData();
-      formData.append('file', selectedFile);
+      selectedFile && formData.append('file', selectedFile);
+      // operationType === 'Update' && formData.append('id',postId);
       formData.append('userId', userInfo?.id);
       formData.append('userName', userInfo?.userName);
       formData.append('postTitle', postTitle);
       formData.append('postDescription', postDescription);
-
+      !selectedFile && operationType === 'Update' && formData.append('imageUrl', imageUrl);
       const config = {
         headers: {
           'content-type': 'multipart/form-data',
         },
       };
 
-      const result = await insertPost(formData,config);
+      const result = operationType === 'Insert' ? await insertPost(formData,config) : await updatePost(`/updatepost/${postId}`,formData,config);
       if (result.data.status) {
-        setSnackbarMessage("Post Inserted Successfully");
+        setSnackbarMessage(`Post ${operationType === 'Insert' ? 'Inserted' : 'Updated'} Successfully`);
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
         getPostData();
+        nullData();
+        setSelectedFile(null);
       } else {
         setSnackbarMessage(result.data.message);
         setSnackbarSeverity('error');
@@ -177,6 +216,19 @@ export default function RecipeReviewCards() {
     setAnchorEl(event.currentTarget);
     setSelectedPostId(postId);
   };
+
+  const handleUpdate = async (postData:any) =>{
+    console.log(postData);
+    setDialogTitle('Update Record');
+    setDialogContentText('To Update your record, please Update your fields and click Update.')
+    setPostId(postData.id);
+    setPostTitle(postData.postTitle);
+    setPostDescription(postData.postDescription);
+    setImageUrl(postData.imageUrl);
+    setImagePreviewUrl(`${baseurl}/images/${postData.imageUrl}`); // Set image preview URL
+    setButtonName('Update');
+    setOpen(true);
+  }
 
   const handleDelete = async () => {
     if (selectedPostId === null) return;
@@ -217,13 +269,22 @@ export default function RecipeReviewCards() {
     width: 1,
   });
 
+  const handleMouseLeave = () => {
+    setVariant('outlined');
+  };
+
+  const handleMouseEnter = () => {
+    setVariant('contained');
+  };
+
   return (
     <div>
       <Button
-        variant="contained"
-        color="primary"
-        onClick={handleClickOpen}
-        style={{ position: "absolute", top: "100px", right: "20px" }}
+        variant={variant}
+        onClick={handleClickOpen}     
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        style={{ position: "absolute", top: "120px", right: "20px", backgroundColor: variant === 'contained' ? "#e47" : "transparent", color: variant === 'contained' ? "#ffffff" : "#e47", borderColor: "#e47" }}
       >
         + Add Post
       </Button>
@@ -233,14 +294,15 @@ export default function RecipeReviewCards() {
         onClose={handleClose}
         aria-labelledby="form-dialog-title"
       >
-        <DialogTitle id="form-dialog-title">Insert Record</DialogTitle>
+        <DialogTitle id="form-dialog-title">{dialogTitle}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            To insert a new record, please fill in the following fields and
-            click submit.
+            {dialogContentText}
           </DialogContentText>
-          <form onSubmit={handleFormSubmit}>
+
+          
             <TextField
+              ref={refTitle}
               value={postTitle}
               onChange={(e) => setPostTitle(e.target.value)}
               margin="dense"
@@ -264,6 +326,13 @@ export default function RecipeReviewCards() {
               error={descriptionError}
               helperText={descriptionError ? "Post description is required" : ""}
             />
+            {imagePreviewUrl && (
+        <img
+          src={imagePreviewUrl}
+          alt="Image Preview"
+          style={{ width: '100%', marginBottom: '10px' }} // Adjust style as needed
+        />
+      )}
             <Button
               component="label"
               sx={{marginTop :"3%"}}
@@ -279,19 +348,41 @@ export default function RecipeReviewCards() {
               <Button onClick={handleClose} color="primary">
                 Cancel
               </Button>
-              <Button type="submit" color="primary" onClick={handleFormSubmit}>
-                Submit
+              <Button type="submit" color="primary" onClick={(e:any) => handleFormSubmit(e,buttonName)}>
+                {buttonName}
               </Button>
             </DialogActions>
-          </form>
         </DialogContent>
       </Dialog>
 
       <div
         style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", marginTop: '5%' }}
       >
-        {postData.map((item: any) => (
-          <Card sx={{ maxWidth: 345, margin: "20px" }} key={item.id}>
+        {loading ? (
+          Array.from(new Array(3)).map((_, index) => (
+            <Card sx={{ maxWidth: 345, margin: "20px" }} key={index}>
+              <CardHeader
+                avatar={<Skeleton variant="circular" width={40} height={40} />}
+                action={<Skeleton variant="rectangular" width={300} height={24} />}
+                title={<Skeleton width="80%" />}
+                subheader={<Skeleton width="40%" />}
+              />
+              <Skeleton variant="rectangular" height={194} />
+              <CardContent>
+                <Skeleton width="90%" />
+                <Skeleton width="60%" />
+              </CardContent>
+              <CardActions disableSpacing>
+                <Skeleton variant="circular" width={40} height={40} />
+                <Skeleton variant="circular" width={40} height={40} />
+                {/* <Skeleton variant="rectangular" width="100%" height={30} /> */}
+              </CardActions>
+            </Card>
+          ))
+        ) : (
+        postData.map((item: any) => (
+          
+          <Card sx={{ minWidth:"20%", margin: "20px" }} key={item.id}>
             <CardHeader
               avatar={
                 <Avatar sx={{ bgcolor: red[500] }} aria-label="recipe">
@@ -322,6 +413,9 @@ export default function RecipeReviewCards() {
                       },
                     }}
                   >
+                    <MenuItem key={'update'} onClick={()=>handleUpdate(item)}>
+                      Update
+                    </MenuItem>
                     <MenuItem key={'delete'} onClick={handleDelete}>
                       Delete
                     </MenuItem>
@@ -335,7 +429,12 @@ export default function RecipeReviewCards() {
             <CardMedia
               component="img"
               height="194"
-              image="https://media.istockphoto.com/id/510244381/photo/typical-spanish-seafood-paella.jpg?s=612x612&w=0&k=20&c=XlXaHQfQTqxJZtfDLJ2J4QjrD3HJSxfJrQwew_jjikY="
+              sx={{
+                objectFit: 'cover', // Ensures the image covers the area without distortion
+                width: '100%', // Ensures the image width is consistent
+                //height: '100%', // Maintains the aspect ratio and ensures consistency
+              }}            
+              image={`${baseurl}/images/${item.imageUrl}`}
               alt="Paella dish"
             />
             <CardContent>
@@ -366,7 +465,8 @@ export default function RecipeReviewCards() {
               </CardContent>
             </Collapse>
           </Card>
-        ))}
+        ))
+        )}
       </div>
 
       <Snackbar open={snackbarOpen} autoHideDuration={2000} onClose={handleSnackbarClose}>
@@ -384,6 +484,10 @@ export default function RecipeReviewCards() {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      <ChildClass name={'Sunrut'}/>
     </div>
   );
 }
+
+
+
