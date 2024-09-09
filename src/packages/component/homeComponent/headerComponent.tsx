@@ -25,6 +25,7 @@ import Brightness7Icon from "@mui/icons-material/Brightness7";
 import { useLocation, useNavigate } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import HomeIcon from '@mui/icons-material/Home';
+import { getUserInfoFromLS } from "../../helpers/localStorage.hapler";
 
 const settings = ["Profile", "Account", "Dashboard", "Logout"];
 
@@ -47,7 +48,7 @@ function HeaderComponent() {
   // This will run once when the component mounts
   React.useEffect(() => {
     //Taking user object from local storage
-    const user:any = JSON.parse(localStorage.getItem("user")!);
+    const user:any = getUserInfoFromLS();
     setPages(["Home", "Product", "Posts"]); // set default pages
     // check if user is not logged in we will add Login page to header 
     if(user === null && !pages.includes('Login')){
@@ -177,7 +178,6 @@ function HeaderComponent() {
             </Menu>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-            <img src="https://dolcino.qodeinteractive.com/wp-content/uploads/2018/11/logo-img-1.png" alt="Cake Shop Logo" style={{ height: 50, marginLeft:"5%" , marginRight: '5%' }} />
             <img src="https://cakeart.thimpress.com/wp-content/uploads/2016/01/logo.png" alt="Cake shop"
             onClick={handleRefresh} // Added onClick event handler
             style={{ cursor: 'pointer' }} // Optional: show pointer cursor to indicate clickability

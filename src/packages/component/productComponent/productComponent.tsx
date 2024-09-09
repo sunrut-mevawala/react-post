@@ -23,11 +23,15 @@ import {
   Avatar,
   Skeleton,
   IconButtonProps,
+  Accordion,
+  AccordionActions,
+  AccordionDetails,
+  AccordionSummary,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import CreateTwoToneIcon from '@mui/icons-material/CreateTwoTone';
-import DeleteIcon from '@mui/icons-material/Delete';
+import CreateTwoToneIcon from "@mui/icons-material/CreateTwoTone";
+import DeleteIcon from "@mui/icons-material/Delete";
 import ShareIcon from "@mui/icons-material/Share";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -36,7 +40,7 @@ import PostAddIcon from "@mui/icons-material/PostAdd";
 import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
 import DashboardCustomizeOutlinedIcon from "@mui/icons-material/DashboardCustomizeOutlined";
 import {
-    deleteProduct,
+  deleteProduct,
   getAllCategories,
   getAllProducts,
   insertCategory,
@@ -45,100 +49,119 @@ import {
 } from "../../../services/product.service";
 import { ExpandMore } from "@mui/icons-material";
 import { red } from "@mui/material/colors";
-import { getLoggedInUserId, getUserInfoFromLS } from "../../helpers/localStorage.hapler";
+import {
+  getLoggedInUserId,
+  getUserInfoFromLS,
+  getUserTokenLS,
+} from "../../helpers/localStorage.hapler";
 import { baseurl } from "../../../services/creds";
 import Carousel from "react-material-ui-carousel";
 
 const ProductComponent: React.FC = () => {
-    const [expanded, setExpanded] = React.useState(false);
-    const [openCategoryDialog, setOpenCategoryDialog] = React.useState(false);
-    const [openProductDialog, setOpenProductDialog] = React.useState(false);
-    const [productData, setProductData] = React.useState<any[]>([]);
-    const [categoryList, setCategoryList] = React.useState<any[]>([]);
+  const [expandedCardId, setExpandedCardId] = React.useState<number | null>(
+    null
+  );
+  const [openCategoryDialog, setOpenCategoryDialog] = React.useState(false);
+  const [openProductDialog, setOpenProductDialog] = React.useState(false);
+  const [productData, setProductData] = React.useState<any[]>([]);
+  const [categoryList, setCategoryList] = React.useState<any[]>([]);
 
-    const [selectedCategory, setSelectedCategory] = React.useState<any>();
-    const [categoryTitle, setCategoryTitle] = React.useState("");
-    const [categoryError, setCategoryError] = React.useState("");
+  const [selectedCategory, setSelectedCategory] = React.useState<any>();
+  const [categoryTitle, setCategoryTitle] = React.useState("");
+  const [categoryError, setCategoryError] = React.useState("");
 
-    const [selectedProductId, setSelectedProductId] = React.useState<number | null>(null);
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-    const [productId, setProductId] = React.useState('');
-    const [productTitle, setProductTitle] = React.useState("");
-    const [productDescription, setProductDescription] = React.useState("");
-    const [productCategory, setProductCategory] = React.useState<any>();
-    const [price, setPrice] = React.useState("");
-    const [discountPercentage, setDiscountPercentage] = React.useState("");
-    const [discountedPrice, setDiscountedPrice] = React.useState("");
-    const [fileError, setFileError] = React.useState("");
-    const [loading, setLoading] = React.useState(true); // Add a loading state
-    const [productTitleError, setProductTitleError] = React.useState("");
-    const [descriptionError, setDescriptionError] = React.useState("");
-    const [productcategoryError, setProductCategoryError] = React.useState("");
-    const [priceError, setPriceError] = React.useState("");
-    const [discountError, setDiscountError] = React.useState("");
-    const [selectedFiles, setSelectedFiles] = React.useState<File[] | null>(null);
-    const [productImages, setProductImages] = React.useState([]);
-    const [dialogTitle, setDialogTitle] = React.useState('');
-    const [dialogContentText, setDialogContentText] = React.useState('');
-    const [buttonName, setButtonName] = React.useState('');
-    const [prodcutimagePreviewUrl, setProductImagePreviewUrl] = React.useState<string | null>(null);
-    const [open, setOpen] = React.useState(false);
-    const [categoryVariant, setCategoryVariant] = React.useState<'contained' | 'outlined'>('outlined');
-    const [productVariant, setProductVariant] = React.useState<'contained' | 'outlined'>('outlined');
+  const [selectedProductId, setSelectedProductId] = React.useState<
+    number | null
+  >(null);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [productId, setProductId] = React.useState("");
+  const [productTitle, setProductTitle] = React.useState("");
+  const [productDescription, setProductDescription] = React.useState("");
+  const [productCategory, setProductCategory] = React.useState<any>();
+  const [price, setPrice] = React.useState("");
+  const [discountPercentage, setDiscountPercentage] = React.useState("");
+  const [discountedPrice, setDiscountedPrice] = React.useState("");
+  const [fileError, setFileError] = React.useState("");
+  const [loading, setLoading] = React.useState(true); // Add a loading state
+  const [productTitleError, setProductTitleError] = React.useState("");
+  const [descriptionError, setDescriptionError] = React.useState("");
+  const [productcategoryError, setProductCategoryError] = React.useState("");
+  const [priceError, setPriceError] = React.useState("");
+  const [discountError, setDiscountError] = React.useState("");
+  const [selectedFiles, setSelectedFiles] = React.useState<File[] | null>(null);
+  const [productImages, setProductImages] = React.useState([]);
+  const [dialogTitle, setDialogTitle] = React.useState("");
+  const [dialogContentText, setDialogContentText] = React.useState("");
+  const [buttonName, setButtonName] = React.useState("");
+  const [prodcutimagePreviewUrl, setProductImagePreviewUrl] = React.useState<
+    string | null
+  >(null);
+  const [open, setOpen] = React.useState(false);
+  const [categoryVariant, setCategoryVariant] = React.useState<
+    "contained" | "outlined"
+  >("outlined");
+  const [productVariant, setProductVariant] = React.useState<
+    "contained" | "outlined"
+  >("outlined");
 
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState<
+    "success" | "error"
+  >("success");
+  const refTitle = React.useRef<HTMLInputElement>(null);
 
+  const userInfo = getUserInfoFromLS();
 
-    const [snackbarOpen, setSnackbarOpen] = React.useState(false);
-    const [snackbarMessage, setSnackbarMessage] = React.useState("");
-    const [snackbarSeverity, setSnackbarSeverity] = React.useState<"success" | "error">("success");
-    const refTitle = React.useRef<HTMLInputElement>(null);;
+  interface ExpandMoreProps extends IconButtonProps {
+    expand: boolean;
+  }
 
-    const userInfo = getUserInfoFromLS();
-
-    interface ExpandMoreProps extends IconButtonProps {
-        expand: boolean;
-      }
-
-    const ExpandMore = styled((props: ExpandMoreProps) => {
-        const { expand, ...other } = props;
-        return <MuiIconButton {...other} />;
-      })(({ theme, expand }) => ({
-        transform: !expand ? "rotate(0deg)" : "rotate(180deg)",
-        marginLeft: "auto",
-        transition: theme.transitions.create("transform", {
-          duration: theme.transitions.duration.shortest,
-        }),
-      }));
-
+  const ExpandMore = styled((props: ExpandMoreProps) => {
+    const { expand, ...other } = props;
+    return <MuiIconButton {...other} />;
+  })(({ theme, expand }) => ({
+    transform: !expand ? "rotate(0deg)" : "rotate(180deg)",
+    marginLeft: "auto",
+    transition: theme.transitions.create("transform", {
+      duration: theme.transitions.duration.shortest,
+    }),
+  }));
 
   const VisuallyHiddenInput = styled("input")({
     display: "none",
   });
 
   React.useEffect(() => {
-      setTimeout(() => {
-        getProductData();
-      }, 3000); // Set timeout for 4 seconds (adjust to 5000 for 5 seconds if needed)
-    }, []);
+    setTimeout(() => {
+      getProductData();
+    }, 3000); // Set timeout for 4 seconds (adjust to 5000 for 5 seconds if needed)
+  }, []);
 
   const getProductData = async () => {
-      try {
-        const res = await getAllProducts("/getAllProducts", "");
-        if (res.data.status) {
-          setProductData(res.data.data);
-        } else {
-          console.log(res.data.message);
-        }
-      } catch (err) {
-        console.error(err);
-      }finally {
-        setLoading(false); // Set loading state to false
+    try {
+      const res = await getAllProducts("/getAllProducts", "");
+      if (res.data.status) {
+        setProductData(res.data.data);
+      } else {
+        console.log(res.data.message);
       }
-    };
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false); // Set loading state to false
+    }
+  };
 
   const handleCategoryDialogOpen = async () => {
     try {
-      const categoriesList = await getAllCategories("/getAllCategories", "");
+      const token = getUserTokenLS();
+      const header = {
+        headers:{
+            'Authorization': token
+        }
+      };
+      const categoriesList = await getAllCategories("/getAllCategories", header);
       if (categoriesList.data.status) {
         setCategoryList(categoriesList.data.data);
       }
@@ -150,29 +173,28 @@ const ProductComponent: React.FC = () => {
     setOpenCategoryDialog(true);
   };
 
-const handleCloseActionMenu = () => {
+  const handleCloseActionMenu = () => {
     setAnchorEl(null);
-}
+  };
 
   const handleCategoryDialogClose = () => {
     setOpenCategoryDialog(false);
   };
 
   const handleProductDialogOpen = async () => {
-
-    setDialogTitle('Insert New Product');
-    setProductTitle('');
-    setProductDescription('');
-    setProductCategory('');
-    setPrice('');
-    setDiscountPercentage('');
-    setDiscountedPrice('');
-    setButtonName('Insert')
+    setDialogTitle("Insert New Product");
+    setProductTitle("");
+    setProductDescription("");
+    setProductCategory("");
+    setPrice("");
+    setDiscountPercentage("");
+    setDiscountedPrice("");
+    setButtonName("Insert");
     // setProductImagePreviewUrl(null);
     setOpen(true);
     setTimeout(() => {
-      if(refTitle.current){
-        const textfield = refTitle.current.querySelectorAll('input')[0];
+      if (refTitle.current) {
+        const textfield = refTitle.current.querySelectorAll("input")[0];
         textfield.focus();
       }
     }, 10);
@@ -181,12 +203,18 @@ const handleCloseActionMenu = () => {
     setOpenProductDialog(true);
   };
 
-  const fetchCategoryList = async (id='') =>{
+  const fetchCategoryList = async (id = "") => {
     try {
-      const categoriesList = await getAllCategories("/getAllCategories", "");
+      const token = getUserTokenLS();
+      const header = {
+        headers:{
+            'Authorization': token
+        }
+      };
+      const categoriesList = await getAllCategories("/getAllCategories",header);
       if (categoriesList.data.status) {
         setCategoryList(categoriesList.data.data);
-        if(id){
+        if (id) {
           setProductCategory(id);
         }
       }
@@ -194,14 +222,14 @@ const handleCloseActionMenu = () => {
       console.error(error);
       //toaster message
     }
-  }
+  };
 
   const handleProductDialogClose = () => {
     setOpenProductDialog(false);
   };
 
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
+  const handleExpandClick = (id: number) => {
+    setExpandedCardId(expandedCardId === id ? null : id);
   };
 
   const handleSaveCategory = async () => {
@@ -218,7 +246,9 @@ const handleCloseActionMenu = () => {
 
       try {
         const res = await insertCategory(
-          { categoryName: categoryTitle, parentCategoryid: selectedCategory }," ");
+          { categoryName: categoryTitle, parentCategoryid: selectedCategory },
+          " "
+        );
         if (res.data.status) {
           setSnackbarMessage("Category inserted successfully!");
           setSnackbarSeverity("success");
@@ -236,7 +266,7 @@ const handleCloseActionMenu = () => {
     }
   };
 
-  const handleSaveProduct = async (event:any,operationType:any) => {
+  const handleSaveProduct = async (event: any, operationType: any) => {
     let hasError = false;
 
     if (!productTitle) {
@@ -308,11 +338,23 @@ const handleCloseActionMenu = () => {
           },
         };
 
-        const res = operationType === 'Insert' ? await insertProduct(formData,config) : await updateProduct(`/updateProduct/${productId}`,formData,config);
+        const res =
+          operationType === "Insert"
+            ? await insertProduct(formData, config)
+            : await updateProduct(
+                `/updateProduct/${productId}`,
+                formData,
+                config
+              );
         if (res.data.status) {
-          setSnackbarMessage(`Product ${operationType === 'Insert' ? 'Inserted' : 'Updated'} successfully!`);
+          setSnackbarMessage(
+            `Product ${
+              operationType === "Insert" ? "Inserted" : "Updated"
+            } successfully!`
+          );
           setSnackbarSeverity("success");
           setOpenProductDialog(false);
+          getProductData();
         } else {
           setSnackbarMessage(res.data.message);
           setSnackbarSeverity("error");
@@ -327,25 +369,23 @@ const handleCloseActionMenu = () => {
     }
   };
 
-
-  const handleUpdate = async (productData:any) =>{
+  const handleUpdate = async (productData: any) => {
     console.log(productData);
-    setDialogTitle("Update Product")
+    setDialogTitle("Update Product");
     setProductId(productData.id);
     setProductTitle(productData.productTitle);
     setProductDescription(productData.productDescription);
     fetchCategoryList(productData.CategoryId);
-    console.log(productData.CategoryId,productCategory);
+    console.log(productData.CategoryId, productCategory);
     setProductCategory(productData.CategoryId);
     setPrice(productData.price);
     setDiscountPercentage(productData.discountPercentage);
     setDiscountedPrice(productData.discountedPrice);
     setProductImages(productData.productImage);
-    setButtonName('Update');
+    setButtonName("Update");
     setProductImagePreviewUrl(`${baseurl}/images/${productData.productImage}`); // Set image preview URL
     setOpenProductDialog(true);
-  }
-
+  };
 
   React.useEffect(() => {
     if (price && discountPercentage) {
@@ -386,59 +426,69 @@ const handleCloseActionMenu = () => {
     setSnackbarOpen(false);
   };
 
-
-
-  const handleDelete = async (e:any,id:string) => {
+  const handleDelete = async (e: any, id: string) => {
     if (!id) return;
 
     try {
       const result = await deleteProduct(`/deleteProduct/${id}`);
       if (result.data.status) {
         setSnackbarMessage("Product Deleted Successfully");
-        setSnackbarSeverity('success');
+        setSnackbarSeverity("success");
         setSnackbarOpen(true);
         getProductData();
       } else {
         setSnackbarMessage(result.data.message);
-        setSnackbarSeverity('error');
+        setSnackbarSeverity("error");
         setSnackbarOpen(true);
       }
     } catch (err: any) {
       setSnackbarMessage(err.message);
-      setSnackbarSeverity('error');
+      setSnackbarSeverity("error");
       setSnackbarOpen(true);
     }
     setAnchorEl(null);
   };
 
-
   const handleCategoryMouseEnter = () => {
-    setCategoryVariant('contained');
+    setCategoryVariant("contained");
   };
 
   const handleCategoryMouseLeave = () => {
-    setCategoryVariant('outlined');
+    setCategoryVariant("outlined");
   };
 
   const handleProductMouseEnter = () => {
-    setProductVariant('contained');
+    setProductVariant("contained");
   };
 
   const handleProductMouseLeave = () => {
-    setProductVariant('outlined');
+    setProductVariant("outlined");
   };
-
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "end", top: "120px",marginRight:"1%" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "end",
+          top: "120px",
+          marginRight: "1%",
+        }}
+      >
         <Button
           variant={categoryVariant}
           color="primary"
           onClick={handleCategoryDialogOpen}
           onMouseEnter={handleCategoryMouseEnter}
           onMouseLeave={handleCategoryMouseLeave}
-          style={{ margin: "1%", padding: "0", backgroundColor: categoryVariant === 'contained' ? "#e47" : "transparent", color: categoryVariant === 'contained' ? "#ffffff" : "#e47", borderColor: "#e47"  }}
+          style={{
+            margin: "1%",
+            padding: "0",
+            backgroundColor:
+              categoryVariant === "contained" ? "#e47" : "transparent",
+            color: categoryVariant === "contained" ? "#ffffff" : "#e47",
+            borderColor: "#e47",
+          }}
           title="Add Category"
         >
           <DashboardCustomizeOutlinedIcon />
@@ -450,7 +500,13 @@ const handleCloseActionMenu = () => {
           onMouseEnter={handleProductMouseEnter}
           onMouseLeave={handleProductMouseLeave}
           onClick={handleProductDialogOpen}
-          style={{ margin: "1%",  backgroundColor: productVariant === 'contained' ? "#e47" : "transparent", color: productVariant === 'contained' ? "#ffffff" : "#e47", borderColor: "#e47"  }}
+          style={{
+            margin: "1%",
+            backgroundColor:
+              productVariant === "contained" ? "#e47" : "transparent",
+            color: productVariant === "contained" ? "#ffffff" : "#e47",
+            borderColor: "#e47",
+          }}
           title="Add Product"
         >
           <LibraryAddIcon />
@@ -645,7 +701,10 @@ const handleCloseActionMenu = () => {
           <Button onClick={handleProductDialogClose} color="primary">
             Cancel
           </Button>
-          <Button  color="primary" onClick={(e:any) => handleSaveProduct(e,buttonName)}>
+          <Button
+            color="primary"
+            onClick={(e: any) => handleSaveProduct(e, buttonName)}
+          >
             {buttonName}
           </Button>
         </DialogActions>
@@ -698,37 +757,66 @@ const handleCloseActionMenu = () => {
                   alt="Paella dish"
                 /> */}
                 <CardContent>
-                <Carousel>
-                    {
-                        item.productImage.map( (img:any, i:number) => <img style={{height:"280px", width:"280px", objectFit:"contain"}} src={`${baseurl}/images/${img}`} /> )
-                    }
-                </Carousel>
-                  <Typography variant="body2" color="text.secondary" sx={{color:"black"}}>
+                  <Carousel>
+                    {item.productImage.map((img: any, i: number) => (
+                      <img
+                        style={{
+                          height: "200px",
+                          width: "280px",
+                          objectFit: "contain",
+                        }}
+                        src={`${baseurl}/images/${img}`}
+                      />
+                    ))}
+                  </Carousel>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ color: "black" }}
+                  >
                     {item.productTitle}
                   </Typography>
                 </CardContent>
                 <CardActions disableSpacing>
-                  <MuiIconButton aria-label="Update Product" onClick={() => handleUpdate(item)}>
+                  <MuiIconButton
+                    aria-label="Update Product"
+                    onClick={() => handleUpdate(item)}
+                  >
                     <CreateTwoToneIcon />
                   </MuiIconButton>
-                  <MuiIconButton aria-label="Delete Product" onClick={(e:any)=> handleDelete(e,item.id)}>
+                  <MuiIconButton
+                    aria-label="Delete Product"
+                    onClick={(e: any) => handleDelete(e, item.id)}
+                  >
                     <DeleteIcon />
                   </MuiIconButton>
                   <ExpandMore
-                    expand={expanded}
-                    onClick={handleExpandClick}
-                    aria-expanded={expanded}
+                    expand={expandedCardId === item.id}
+                    onClick={() => handleExpandClick(item.id)}
+                    aria-expanded={expandedCardId === item.id}
                     aria-label="show more"
                   >
                     <ExpandMoreIcon />
                   </ExpandMore>
                 </CardActions>
-                <Collapse in={expanded} timeout="auto" unmountOnExit>
-                  <CardContent>
+                <Accordion expanded={expandedCardId === item.id}
+                >
+                  <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1bh-content"
+          id="panel1bh-header"
+        >
+          <Typography sx={{ width: '33%', flexShrink: 0 }}>
+            General settings
+          </Typography>
+        </AccordionSummary>
+                  <AccordionDetails
+                    style={{maxWidth: "250px" }}
+                  >
                     <Typography paragraph>Description:</Typography>
                     <Typography>{item.productDescription}</Typography>
-                  </CardContent>
-                </Collapse>
+                  </AccordionDetails>
+                </Accordion>
               </Card>
             ))}
       </div>

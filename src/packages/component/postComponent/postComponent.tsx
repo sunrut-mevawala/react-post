@@ -25,7 +25,6 @@ import { getAllPost, insertPost, deletePost, updatePost } from "../../../service
 import { getLoggedInUserId, getUserInfoFromLS } from "../../helpers/localStorage.hapler";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { baseurl } from "../../../services/creds";
-import ChildClass from "./temp";
 
 
 interface ExpandMoreProps extends IconButtonProps {
@@ -484,7 +483,7 @@ export default function RecipeReviewCards() {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-      <ChildClass name={'Sunrut'}/>
+      {/* <ChildClass name={'Sunrut'}/> */}
     </div>
   );
 }

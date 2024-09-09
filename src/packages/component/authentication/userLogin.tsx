@@ -30,7 +30,6 @@ const [errorMessage, setErrorMessage] = useState('');
     // we are triggering userLogin API to validate the user
     const result = await userLogin({emailOrPhone: emailOrPhone, password: password},"");
     if (result.data.status) {
-        console.log(result.data.user);
         //storing user data in localstorage.
         localStorage.setItem('user', JSON.stringify(result.data.user));
         setSnackbarMessage('Login successful');
